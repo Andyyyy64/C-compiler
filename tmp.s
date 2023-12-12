@@ -2,5 +2,4 @@
 .globl main
 main:
   mov rax, 5
-  sub rax, 3
-  ret
+  add rax, 20
