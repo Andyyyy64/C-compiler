@@ -12,13 +12,30 @@ typedef enum {
   TK_EOF,       // end of file token
 } TokenKind;
 
+typedef enum {
+  ND_ADD, // +
+  ND_SUB, // -
+  ND_MUL, // *
+  ND_DIV, // /
+  ND_NUM, // integer
+} NodeKind;
+
 typedef struct Token Token;
+
+typedef struct Node Node;
 
 struct Token {
   TokenKind kind; // token type
   Token *next; // next input token
   int val; // if kind is TK_NUM, this is the number
   char *str; // token string
+};
+
+struct Node {
+  NodeKind kind; // node type
+  Node *lhs; // left-hand side(左辺)
+  Node *rhs; // right-hand side(右辺)
+  int val; // if kind is ND_NUM, this is the number
 };
 
 Token *token; // current token
@@ -79,6 +96,63 @@ Token *new_token(TokenKind kind, Token *cur, char *str) {
   // connect to cur
   cur->next = tok;
   return tok;
+}
+
+// create new node and connect it to lhs and rhs
+Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
+  Node *node = calloc(1, sizeof(Node));
+  node->kind = kind;
+  node->lhs = lhs;
+  node->rhs = rhs;
+  return node;
+}
+
+// create new node for integer
+Node *new_node_num(int val) {
+  Node *node = calloc(1,sizeof(Node));
+  node->kind = ND_NUM;
+  node->val = val;
+  return node;
+}
+
+Node *primary() {
+  // if next token is '(', it should be '(' expr ')'
+  if(consume('(')) {
+    Node *node = expr();
+    expect(')');
+    return node;
+  }
+
+  return new_node_num(expect_number());
+}
+
+Node *mul() {
+  Node *node = primary();
+
+  for(;;) {
+    if(consume('*')) {
+      node = new_node(ND_MUL, node, primary());
+    } else if(consume('/')) {
+      node = new_node(ND_DIV, node, primary());
+    } else {
+      return node;
+    }
+  }
+}
+
+Node *expr() {
+  Node *node = mul();
+
+  for(;;) {
+    if(consume('+')) {
+      node = new_node(ND_ADD, node, mul());
+    }
+      else if(consume('-')) {
+        node = new_node(ND_SUB, node, mul());
+      } else {
+        return node;
+      }
+  }
 }
 
 // parse input and return new token
