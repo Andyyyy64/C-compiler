@@ -23,6 +23,7 @@ struct Token {
   Token *next; // next input token
   int val; // if kind is TK_NUM, this is the number
   char *str; // token string
+  int len; // token length
 };
 
 
@@ -45,8 +46,10 @@ void error_at(char *loc, char *fmt, ...) {
 }
 
 // if the next token is the expected symbol, read the token return true.
-bool consume(char op) {
-  if(token->kind != TK_RESEREVED || token->str[0] != op) {
+bool consume(char *op) {
+  if(token->kind != TK_RESEREVED ||
+     strlen(op) != token->len ||
+     memcmp(token->str, op, token->len)) {
     return false;
   }
   token = token->next; // move to next token
@@ -159,10 +162,13 @@ Node *new_node_num(int val) {
   return node;
 }
 
-Node *expr();
-Node *mul();
-Node *unary();
-Node *primary();
+Node *expr();       // expr       = equality
+Node *equality();   // equality   = relational ("==" relational | "!=" relational)*
+Node *relational(); // relational = add ("<" add | "<=" add | ">" add | ">=" add)*
+Node *add();        // add        = mul ("+" mul | "-" mul)*
+Node *mul();        // mul        = unary ("*" unary | "/" unary)*
+Node *unary();      // unary      = ("+" | "-")? primary
+Node *primary();    // primary    = num | "(" expr ")"
 
 // expr = mul ("+" mul | "-" mul)*
 Node *expr() {
