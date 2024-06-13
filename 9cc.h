@@ -12,6 +12,7 @@
 // token type enum
 typedef enum {
   TK_RESEREVED, // reserved word
+  TK_IDENT,     // identifier token
   TK_NUM,       // integer token
   TK_EOF,       // end of file token
 } TokenKind;
@@ -29,6 +30,7 @@ struct Token {
 void error(char *fmt, ...); // print error
 void error_at(char *loc, char *fmt, ...); // print whare is the error at
 bool consume(char *op);
+char *consume_ident();
 void expect(char *op);
 int expect_number();
 bool at_eof();
@@ -49,6 +51,8 @@ typedef enum {
   ND_SUB, // -
   ND_MUL, // *
   ND_DIV, // /
+  ND_LVAR, // local variable
+  ND_ASSIGN, // =
   ND_NUM, // integer
   ND_EQ, // ==
   ND_NE, // !=
@@ -63,12 +67,17 @@ struct Node {
   Node *lhs; // left-hand side(左辺)
   Node *rhs; // right-hand side(右辺)
   int val; // if kind is ND_NUM, this is the number
+  int offset; // if kind is ND_LVAR, this is the offset from the base pointer
 };
 
+void program();
 Node *expr();
+
+Node *code[100];
 
 //
 // codegen.c
 //
 
+void gen(Node *node);
 void codegen(Node *node);

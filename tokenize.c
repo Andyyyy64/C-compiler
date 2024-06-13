@@ -28,6 +28,16 @@ bool consume(char *op) {
   return true;
 }
 
+char *consume_ident() {
+  if (token->kind != TK_IDENT) {
+    return NULL;
+  }
+  char *name = calloc(token->len + 1, sizeof(char));
+  strncpy(name, token->str, token->len);
+  token = token->next;
+  return name;
+}
+
 // if the next token is the expected symbol, read the token otherwise report an error.
 void expect(char *op) {
   if(token->kind != TK_RESEREVED || strlen(op) != token->len ||
@@ -102,6 +112,12 @@ Token *tokenize() {
       char *q = p;
       cur->val = strtol(p, &p, 10);
       cur->len = p - q;
+      continue;
+    }
+
+    if('a' <= *p && *p <= 'z') {
+      cur = new_token(TK_IDENT, cur, p++, 1);
+      cur->len = 1;
       continue;
     }
 

@@ -17,7 +17,10 @@ Node *new_node_num(int val) {
   return node;
 }
 
-Node *expr();       // expr       = equality
+void program();     // program    = stmt*
+Node *stmt();       // stmt       = expr ";"
+Node *expr();       // expr       = assign
+Node *assign();     // assign     = equality ("=" assign)?
 Node *equality();   // equality   = relational ("==" relational | "!=" relational)*
 Node *relational(); // relational = add ("<" add | "<=" add | ">" add | ">=" add)*
 Node *add();        // add        = mul ("+" mul | "-" mul)*
@@ -25,9 +28,33 @@ Node *mul();        // mul        = unary ("*" unary | "/" unary)*
 Node *unary();      // unary      = ("+" | "-")? primary
 Node *primary();    // primary    = num | "(" expr ")"
 
+Node *code[100];
+
+void program() {
+  int i = 0;
+  while(!at_eof()) { // until end of input
+    code[i++] = stmt(); // parse statement
+  }
+  code[i] = NULL; // set NULL to the end of code
+}
+
 // expr = equality
 Node *expr() {
-  return equality();
+  return assign();
+}
+
+Node *assign() {
+  Node *node = equality();
+
+  if(consume("=")) {
+    node = new_node(ND_ASSIGN, node, assign()); // create new node for assignment
+  }
+}
+
+Node *stmt() {
+  Node *node = expr();
+  expect(";");
+  return node;
 }
 
 // equality   = relational ("==" relational | "!=" relational)*
@@ -113,6 +140,12 @@ Node *primary() {
     expect(")");
     return node;
   }
-
+  Token *tok = consume_ident();
+  if(tok) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_LVAR;
+    node->offset = (tok->str[0] - 'a' + 1) * 8;
+    return node;
+  }
   return new_node_num(expect_number());
 }
